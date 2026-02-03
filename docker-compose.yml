@@ -1,0 +1,94 @@
+﻿version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: polytechnic-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env.docker
+    environment:
+      MONGODB_URI: ${MONGODB_URI:-mongodb+srv://Dinesh:qwertyuiop@dinesh.qhdacjv.mongodb.net/polytechnic-sis?retryWrites=true&w=majority}
+      PORT: ${PORT:-5000}
+      NODE_ENV: ${NODE_ENV:-production}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
+      JWT_EXPIRE: ${JWT_EXPIRE:-7d}
+      JWT_REFRESH_EXPIRE: ${JWT_REFRESH_EXPIRE:-30d}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-your-aws-access-key}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-your-aws-secret-key}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME:-your-bucket-name}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      EMAIL_USER: ${EMAIL_USER:-your-email@gmail.com}
+      EMAIL_PASS: ${EMAIL_PASS:-your-app-password}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001,http://13.233.148.165:3000,http://13.233.148.165:3001}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on: []
+    volumes:
+      - ./backend/logs:/app/logs
+    networks:
+      - polytechnic-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  user-app:
+    build:
+      context: ./user-app
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://backend:5000/api
+    container_name: polytechnic-user-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - polytechnic-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  admin-app:
+    build:
+      context: ./admin-app
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://backend:5000/api
+    container_name: polytechnic-admin-app
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - polytechnic-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  polytechnic-network:
+    driver: bridge

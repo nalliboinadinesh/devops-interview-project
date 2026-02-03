@@ -1,0 +1,16 @@
+{
+  "name": "polytechnic-sis",
+  "version": "1.0.0",
+  "description": "Polytechnic Student Information System - MERN Stack Application",
+  "private": true,
+  "scripts": {
+    "install-all": "npm install && cd backend && npm install && cd ../user-app && npm install && cd ../admin-app && npm install",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix user-app\" \"npm run dev --prefix admin-app\"",
+    "build": "npm run build --prefix backend && npm run build --prefix user-app && npm run build --prefix admin-app",
+    "test": "concurrently \"npm test --prefix backend\" \"npm test --prefix user-app\" \"npm test --prefix admin-app\"",
+    "lint": "concurrently \"npm run lint --prefix backend\" \"npm run lint --prefix user-app\" \"npm run lint --prefix admin-app\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.1"
+  }
+}
