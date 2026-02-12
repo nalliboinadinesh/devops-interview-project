@@ -1,14 +1,20 @@
 const nodemailer = require('nodemailer');
 const logger = require('./logger');
 
-// Initialize email transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
+// Initialize email transporter only if credentials provided
+let transporter = null;
+if (EMAIL_USER && EMAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASS
+    }
+  });
+}
 
 /**
  * Generate a random 6-digit OTP
@@ -30,8 +36,12 @@ const getOTPExpiry = () => {
  */
 const sendOTPEmail = async (email, otp) => {
   try {
+    if (!transporter) {
+      throw new Error('Email transporter not configured. Set EMAIL_USER and EMAIL_PASS in environment.');
+    }
+
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'crreddy2326cse@gmail.com',
+      from: EMAIL_USER,
       to: email,
       subject: 'Your OTP for College SIS Login',
       html: `

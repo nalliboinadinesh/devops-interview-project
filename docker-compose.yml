@@ -9,10 +9,13 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    # Read environment variables from the repository root `.env` file
+    # (Create a root `.env` to control all services centrally)
     env_file:
-      - .env.docker
+      - .env
     environment:
-      MONGODB_URI: ${MONGODB_URI:-mongodb+srv://Dinesh:qwertyuiop@dinesh.qhdacjv.mongodb.net/polytechnic-sis?retryWrites=true&w=majority}
+      # Prefer an explicit MONGODB_URI; default points to a mongo service in compose network
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/polytechnic-sis}
       PORT: ${PORT:-5000}
       NODE_ENV: ${NODE_ENV:-production}
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
@@ -25,7 +28,7 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-1}
       EMAIL_USER: ${EMAIL_USER:-your-email@gmail.com}
       EMAIL_PASS: ${EMAIL_PASS:-your-app-password}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001,http://13.233.148.165:3000,http://13.233.148.165:3001}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on: []
     volumes:
@@ -44,7 +47,7 @@ services:
       context: ./user-app
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: http://backend:5000/api
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://backend:5000/api}
     container_name: polytechnic-user-app
     restart: unless-stopped
     ports:
@@ -54,6 +57,7 @@ services:
         condition: service_healthy
     networks:
       - polytechnic-network
+    
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -66,7 +70,7 @@ services:
       context: ./admin-app
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: http://backend:5000/api
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://backend:5000/api}
     container_name: polytechnic-admin-app
     restart: unless-stopped
     ports:
@@ -83,12 +87,25 @@ services:
       retries: 3
       start_period: 20s
 
+  mongo:
+    image: mongo:6
+    container_name: polytechnic-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-polytechnic-sis}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - polytechnic-network
+
 volumes:
   mongodb_data:
     driver: local
   mongodb_config:
     driver: local
-
 networks:
   polytechnic-network:
     driver: bridge
