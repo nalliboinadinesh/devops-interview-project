@@ -22,15 +22,17 @@ const Banner = require('./models/Banner');
 
 const app = express();
 
+const constants = require('./config/constants');
+
 // CORS Configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.CORS_ORIGIN 
-      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    const allowedOrigins = constants.CORS_ORIGIN
+      ? constants.CORS_ORIGIN.split(',').map(o => o.trim())
       : ['http://localhost:3000', 'http://localhost:3001'];
-    
+
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    if (!origin || allowedOrigins.includes(origin) || constants.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -49,7 +51,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/polytechnic-sis')
+mongoose.connect(constants.MONGODB_URI)
   .then(() => logger.info('MongoDB connected'))
   .catch(err => {
     logger.error('MongoDB connection error:', err);

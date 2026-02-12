@@ -5,7 +5,7 @@ import { authClient } from '../api/authClient';
 
 const Login = () => {
   const [step, setStep] = useState('email'); // 'email' or 'otp'
-  const [email, setEmail] = useState('crreddy2326cse@gmail.com');
+  const [email, setEmail] = useState('');
   const [otp, setOTP] = useState('');
   const [error, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
